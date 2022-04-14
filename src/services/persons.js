@@ -10,7 +10,7 @@ const create = newPerson => {
 }
 
 const update = (id, newPerson) => {
-    axios.put(`${baseUrl}/${id}`, newPerson)
+    return axios.put(`${baseUrl}/${id}`, newPerson)
 }
 
 const deletePerson = (id) => {

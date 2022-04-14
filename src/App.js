@@ -7,6 +7,7 @@ const App = () => {
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [message, setMessage] = useState(null)
 
   useEffect(() => {
     personService
@@ -30,24 +31,61 @@ const App = () => {
       setPersons(findPerson)    
   }
 
-  const handleAddPerson = (event) => {
+const handleAddPerson = (event) => {
     event.preventDefault();
+    
     const newPerson = {
       name: newName,
       number: newNumber
     }
 
-    personService
+    const findPerson = persons.filter(person => person.name === newName)
+    const samePerson = findPerson[0];
+    
+
+    if(samePerson) {
+      const confirmPerson = window.confirm(`${samePerson.name} has already been added`)
+      if(confirmPerson) {
+        
+        const updatedPerson = {
+           ...samePerson,
+          number: newNumber
+        }
+        
+        personService
+          .update(samePerson.id, updatedPerson)
+          .then(res => {
+            setPersons(persons.map(person => person.id !== samePerson.id ? person : res.data))
+            setMessage(`${updatedPerson.name} number has been changed.`)
+
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
+          }) 
+          .catch(err => {
+            console.log(err)
+            setMessage(`${samePerson.name} has already been deleted`)
+
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
+          })
+      }
+    } else {
+
+       personService
       .create(newPerson)
       .then(res => {
-        const samePerson = persons.find(person => person.name === newName)
-        if(samePerson) {
-          alert(`${newName} is already added to the phonebook. Do you want to add a new number?`)
-        } else {
           setPersons(persons.concat(res.data))
-        }
-    })
+          setMessage(`${newPerson.name} Added to phone book`)
+
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
+      })
+    }
   }
+
 
   const handleDeletePerson = (id) => {
     const filteredPerson = persons.filter(person => person.id === id);
@@ -60,12 +98,16 @@ const App = () => {
   }
 
   return (
-    <div>
+    <div className='App'>
       <h2>Phonebook</h2>
+      <div className='error'>
+        {message}
+      </div>
       <div>
         Search: 
         <input type="text" value={searchTerm} onChange={handleSearch} />
       </div>
+      <h2>Add new person:</h2>
       <form onSubmit={handleAddPerson}>
         <div>
           name: <input value={newName} onChange={handleAddName}/>
